@@ -1,0 +1,105 @@
+# ==============================================================================
+# Dataset, Split, Preprocessing & Augmentation Configuration — Step 2 (CW1 T1)
+# Module: NB6057CEM — Artificial Neural Networks
+# ==============================================================================
+
+dataset_provenance:
+  name: "UrbanSound8K"
+  official_url: "https://urbansounddataset.weebly.com/urbansound8k.html"
+  citation: "J. Salamon, C. Jacoby and J. P. Bello, 'A Dataset and Taxonomy for Urban Sound Research', 22nd ACM International Conference on Multimedia, Orlando, FL, USA, Nov. 2014."
+  license_and_access: "Academic and non-commercial research use only; subject to UrbanSound8K terms of use."
+  expected_total_clips: 8732
+  expected_num_classes: 10
+  expected_folds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  unit_of_observation: "One single-label urban audio slice (<= 4.0 seconds)"
+  raw_root_dir: "data/raw/UrbanSound8K"
+  metadata_csv: "data/raw/UrbanSound8K/metadata/UrbanSound8K.csv"
+  audio_dir: "data/raw/UrbanSound8K/audio"
+
+task_definition:
+  task_type: "binary_classification"
+  target_column: "binary_label"
+  positive_class_name: "siren"
+  positive_class_id: 8
+  positive_label: 1
+  negative_class_name: "non_siren"
+  negative_label: 0
+  single_label_limitation: "UrbanSound8K provides single-label annotations per slice; overlapping multi-source sirens in arbitrary unsegmented audio streams are outside dataset ground-truth scope."
+
+split_protocol:
+  protocol_name: "fixed_fold_coursework_split"
+  note: "Deterministic coursework evaluation protocol using official predefined folds (not the full 10-fold cross-validation benchmark). Held-out test fold is reserved strictly for final evaluation."
+  group_column: "fsID"
+  fold_column: "fold"
+  train_folds: [1, 2, 3, 4, 5, 6, 7, 8]
+  val_folds: [9]
+  test_folds: [10]
+  splits_dir: "data/splits"
+  train_manifest: "data/splits/train.csv"
+  val_manifest: "data/splits/val.csv"
+  test_manifest: "data/splits/test.csv"
+  split_summary_json: "data/splits/split_summary.json"
+
+audio_signal:
+  target_sample_rate: 22050
+  target_duration_sec: 4.0
+  target_num_samples: 88200
+  mono: true
+  pad_mode: "constant_zero"
+  truncate_policy: "fixed_start_window"
+
+features:
+  mfcc:
+    n_mfcc: 40
+    n_fft: 2048
+    hop_length: 512
+    win_length: 2048
+    n_mels: 128
+    f_min: 0.0
+    f_max: 11025.0
+    summary_stats: ["mean", "std"]
+    expected_feature_dim: 80
+    scaler_path: "data/processed/mfcc_scaler.json"
+
+  mel_spectrogram:
+    n_mels: 128
+    n_fft: 2048
+    hop_length: 512
+    win_length: 2048
+    f_min: 0.0
+    f_max: 11025.0
+    power: 2.0
+    log_offset: 1.0e-6
+    top_db: 80.0
+    expected_channels: 1
+    expected_n_mels: 128
+    expected_time_frames: 173
+    norm_stats_path: "data/processed/mel_norm_stats.json"
+    precomputed_config_path: "data/processed/preprocessing_config.json"
+
+augmentation:
+  apply_to_splits: ["train"]
+  allow_on_val_or_test: false
+  default_enabled: false
+  probability: 0.5
+  additive_noise_snr_db_range: [10.0, 25.0]
+  max_time_shift_fraction: 0.1
+  amplitude_scale_range: [0.85, 1.15]
+
+dataloader:
+  batch_size: 32
+  num_workers: 0
+  pin_memory: false
+  drop_last_train: false
+
+audit_outputs:
+  audit_json_path: "results/metrics/dataset_audit.json"
+  audit_class_csv_path: "results/metrics/class_distribution.csv"
+  audit_fold_csv_path: "results/metrics/fold_distribution.csv"
+  figures_dir: "results/figures"
+  figure_filenames:
+    class_distribution: "fig1_original_10class_distribution.png"
+    binary_distribution: "fig2_binary_siren_distribution.png"
+    duration_distribution: "fig3_audio_duration_distribution.png"
+    sample_rate_and_fold_distribution: "fig4_sample_rate_and_fold_distribution.png"
+

@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ann-siren-detection"
+version = "0.1.0"
+description = "Robust Emergency Siren Classification Under Urban Noise: A Comparative Study of MLP and CNN Architectures (NB6057CEM)"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "NB6057CEM Coursework Researcher" }
+]
+keywords = [
+    "artificial-neural-networks",
+    "audio-classification",
+    "siren-detection",
+    "urbansound8k",
+    "mlp",
+    "cnn",
+    "pytorch"
+]
+dependencies = [
+    "torch>=2.2.0",
+    "torchaudio>=2.2.0",
+    "numpy>=1.26.4",
+    "pandas>=2.2.2",
+    "scikit-learn>=1.4.2",
+    "scipy>=1.13.0",
+    "librosa>=0.10.2.post1",
+    "soundfile>=0.12.1",
+    "matplotlib>=3.8.4",
+    "seaborn>=0.13.2",
+    "plotly>=6.3.1",
+    "PyYAML>=6.0.1",
+    "streamlit>=1.35.0",
+    "pytest>=8.2.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra -q"

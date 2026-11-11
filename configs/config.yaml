@@ -1,0 +1,115 @@
+# ==============================================================================
+# Project Configuration — ANN Coursework (NB6057CEM)
+# Initial project settings only (not experimental results).
+# ==============================================================================
+
+project:
+  name: "ANN-Siren-Detection"
+  title: "Robust Emergency Siren Classification Under Urban Noise: A Comparative Study of MLP and CNN Architectures"
+  module: "NB6057CEM — Artificial Neural Networks"
+  version: "0.1.0"
+  step: "Step 1 — Project Setup and Environment Configuration"
+
+dataset:
+  identifier: "UrbanSound8K"
+  source_url: "https://urbansounddataset.weebly.com/urbansound8k.html"
+  total_folds: 10
+  folds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  target_class: "siren"
+  target_class_id: 8
+  required_metadata_columns:
+    - "slice_file_name"
+    - "fsID"
+    - "start"
+    - "end"
+    - "salience"
+    - "fold"
+    - "classID"
+    - "class"
+  classes:
+    0: "air_conditioner"
+    1: "car_horn"
+    2: "children_playing"
+    3: "dog_bark"
+    4: "drilling"
+    5: "engine_idling"
+    6: "gun_shot"
+    7: "jackhammer"
+    8: "siren"
+    9: "street_music"
+
+task:
+  type: "binary_classification"
+  description: "Binary siren versus non-siren classification"
+  positive_label: 1
+  positive_class_name: "siren"
+  negative_label: 0
+  negative_class_name: "non_siren"
+
+reproducibility:
+  default_seed: 42
+  random_seeds:
+    - 42
+    - 123
+    - 2026
+  deterministic_cudnn: true
+  benchmark_cudnn: false
+
+evaluation:
+  primary_metric: "macro-F1"
+  supporting_metrics:
+    - "f1_siren"
+    - "precision_siren"
+    - "recall_siren"
+    - "roc_auc"
+    - "pr_auc"
+    - "balanced_accuracy"
+
+models:
+  candidate_models:
+    - id: "random_forest"
+      name: "Random Forest"
+      category: "classical_ml_baseline"
+      framework: "scikit-learn"
+      enabled: true
+    - id: "deep_mlp"
+      name: "Deep MLP"
+      category: "deep_neural_network"
+      framework: "pytorch"
+      enabled: true
+    - id: "cnn_2d"
+      name: "2D CNN"
+      category: "convolutional_neural_network"
+      framework: "pytorch"
+      enabled: true
+  first_principles_model:
+    id: "numpy_mlp"
+    name: "NumPy MLP (First-Principles Implementation)"
+    category: "first_principles_ann"
+    framework: "numpy"
+    description: "Separate NumPy-only multi-layer perceptron implementing forward pass, backpropagation, and gradient descent from scratch for pedagogical and analytical verification."
+    enabled: true
+
+paths:
+  data_root: "data"
+  raw_data_dir: "data/raw"
+  urbansound8k_root: "data/raw/UrbanSound8K"
+  metadata_csv: "data/raw/UrbanSound8K/metadata/UrbanSound8K.csv"
+  audio_dir: "data/raw/UrbanSound8K/audio"
+  processed_data_dir: "data/processed"
+  splits_dir: "data/splits"
+  checkpoints_dir: "checkpoints"
+  results_dir: "results"
+  metrics_dir: "results/metrics"
+  figures_dir: "results/figures"
+  reports_dir: "reports"
+  notebooks_dir: "notebooks"
+  demo_dir: "demo"
+
+hardware:
+  preferred_device: "auto"  # Options: "auto", "cpu", "cuda", "mps"
+  allow_gpu: true
+  fallback_to_cpu: true
+  num_workers: 0
+  pin_memory: false
+

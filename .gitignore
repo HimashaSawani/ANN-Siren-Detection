@@ -54,6 +54,14 @@ ENV/
 env.bak/
 venv.bak/
 
+# Large archive files & datasets
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.gz
+archive.zip
+
 # Dataset & Artifacts (keep directory structure via .gitkeep)
 data/raw/*
 !data/raw/.gitkeep

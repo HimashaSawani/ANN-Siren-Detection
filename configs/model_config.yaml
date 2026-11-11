@@ -1,0 +1,133 @@
+# ==============================================================================
+# Competing Models & Fair Training Configuration — Step 4 (CW1 T3)
+# Module: NB6057CEM — Artificial Neural Networks
+# ==============================================================================
+
+comparison_protocol:
+  primary_selection_metric: "macro-F1"
+  tie_breaker_metric: "val_loss"
+  allow_test_set_access_during_training_or_tuning: false
+  class_weight_policy: "train_split_only"
+  seeds_supported: [42, 123, 2026]
+  default_development_seed: 42
+  representation_limitation_note: >
+    Random Forest and Deep MLP consume 80-dimensional MFCC summary vectors
+    (40 temporal means + 40 temporal standard deviations), whereas the 2D CNN
+    consumes 2D Log-Mel spectrograms of shape (1, 128, 173). Consequently,
+    empirical performance differences between the 2D CNN and the tabular models
+    reflect the joint effect of input representation (time-frequency preservation
+    vs. temporal summary pooling) and neural architecture (2D spatial-spectral
+    convolution vs. dense layers).
+
+random_forest:
+  model_id: "random_forest"
+  framework: "scikit-learn"
+  input_representation: "mfcc"
+  input_shape: [80]
+  default_params:
+    n_estimators: 200
+    max_depth: 16
+    min_samples_split: 2
+    min_samples_leaf: 2
+    class_weight: "balanced"
+    n_jobs: 1
+  tuning_budget_candidates:
+    - config_id: "rf_100_d12_bal"
+      n_estimators: 100
+      max_depth: 12
+      min_samples_leaf: 2
+      class_weight: "balanced"
+    - config_id: "rf_200_d16_bal"
+      n_estimators: 200
+      max_depth: 16
+      min_samples_leaf: 1
+      class_weight: "balanced"
+    - config_id: "rf_200_dnone_balsub"
+      n_estimators: 200
+      max_depth: null
+      min_samples_leaf: 2
+      class_weight: "balanced_subsample"
+    - config_id: "rf_300_d20_bal"
+      n_estimators: 300
+      max_depth: 20
+      min_samples_leaf: 2
+      class_weight: "balanced"
+
+deep_mlp:
+  model_id: "deep_mlp"
+  framework: "pytorch"
+  input_representation: "mfcc"
+  input_shape: [80]
+  architecture:
+    input_dim: 80
+    hidden_dims: [128, 64]
+    output_dim: 1
+    activation: "relu"
+    dropout: 0.3
+    init_scheme: "kaiming_normal"
+  training:
+    loss_function: "BCEWithLogitsLoss"
+    use_train_pos_weight: true
+    optimizer: "Adam"
+    learning_rate: 0.001
+    weight_decay: 0.0001
+    batch_size: 32
+    max_epochs: 60
+    early_stopping_patience: 10
+    early_stopping_min_delta: 0.0001
+  tuning_budget_candidates:
+    - config_id: "mlp_lr1e3_do03"
+      learning_rate: 0.001
+      dropout: 0.3
+      weight_decay: 0.0001
+      batch_size: 32
+    - config_id: "mlp_lr5e4_do02"
+      learning_rate: 0.0005
+      dropout: 0.2
+      weight_decay: 0.0001
+      batch_size: 32
+    - config_id: "mlp_lr1e3_do02"
+      learning_rate: 0.001
+      dropout: 0.2
+      weight_decay: 0.0005
+      batch_size: 32
+
+cnn_2d:
+  model_id: "cnn_2d"
+  framework: "pytorch"
+  input_representation: "mel"
+  input_shape: [1, 128, 173]
+  architecture:
+    in_channels: 1
+    conv_channels: [16, 32, 64]
+    kernel_size: [3, 3]
+    stride: [1, 1]
+    padding: [1, 1]
+    pool_size: [2, 2]
+    use_batchnorm: true
+    global_pool: "adaptive_avg_pool2d_1x1"
+    dropout: 0.3
+    output_dim: 1
+    init_scheme: "kaiming_normal"
+  training:
+    loss_function: "BCEWithLogitsLoss"
+    use_train_pos_weight: true
+    optimizer: "Adam"
+    learning_rate: 0.001
+    weight_decay: 0.0001
+    batch_size: 32
+    max_epochs: 50
+    early_stopping_patience: 8
+    early_stopping_min_delta: 0.0001
+  tuning_budget_candidates:
+    - config_id: "cnn_lr1e3_do03"
+      learning_rate: 0.001
+      dropout: 0.3
+      weight_decay: 0.0001
+      batch_size: 32
+    - config_id: "cnn_lr5e4_do02"
+      learning_rate: 0.0005
+      dropout: 0.2
+      weight_decay: 0.0001
+      batch_size: 32
+

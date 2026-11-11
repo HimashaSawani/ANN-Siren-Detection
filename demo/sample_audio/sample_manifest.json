@@ -1,0 +1,36 @@
+{
+  "provenance_note": "These demonstration audio clips are selected from the official UrbanSound8K held-out test partition (Fold 10). They are explicitly labeled verification examples and must not be misrepresented as independent external field recordings.",
+  "samples": [
+    {
+      "local_path": "demo/sample_audio/siren_sample_165166-8-0-0.wav",
+      "original_filename": "165166-8-0-0.wav",
+      "fold": 10,
+      "fsID": 165166,
+      "classID": 8,
+      "class_name": "siren",
+      "binary_label": 1,
+      "salience": 1,
+      "duration_sec": 4.0,
+      "sample_rate_hz": 44100,
+      "channels": 2,
+      "expected_prediction": "Siren (1)",
+      "measured_deep_mlp_prob": 1.0
+    },
+    {
+      "local_path": "demo/sample_audio/non_siren_sample_100795-3-0-0.wav",
+      "original_filename": "100795-3-0-0.wav",
+      "fold": 10,
+      "fsID": 100795,
+      "classID": 3,
+      "class_name": "dog_bark",
+      "binary_label": 0,
+      "salience": 1,
+      "duration_sec": 4.0,
+      "sample_rate_hz": 44100,
+      "channels": 2,
+      "expected_prediction": "Non-Siren (0)",
+      "measured_deep_mlp_prob": 0.0003
+    }
+  ]
+}
+

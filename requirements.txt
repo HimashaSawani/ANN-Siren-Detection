@@ -1,0 +1,39 @@
+# ==============================================================================
+# ANN-Siren-Detection — Pinned Dependencies (NB6057CEM)
+# Compatible with Python 3.11+ on Windows (CPU/CUDA) and Google Colab.
+#
+# Standard installation (CPU / default PyPI index):
+#   pip install -r requirements.txt
+#
+# Optional GPU (CUDA 12.x) PyTorch installation on Windows/Linux:
+#   pip install torch==2.8.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu124
+#   pip install -r requirements.txt
+# ==============================================================================
+
+# Core Neural Network Framework (PyTorch)
+torch==2.8.0
+torchaudio==2.8.0
+
+# Scientific Computing & Tabular Data
+numpy==2.2.6
+pandas==2.3.3
+scipy==1.16.2
+scikit-learn==1.9.1
+
+# Audio Processing
+librosa==0.10.2.post1
+soundfile==0.12.1
+
+# Visualization
+matplotlib==3.10.7
+seaborn==0.13.2
+plotly==6.3.1
+
+# Configuration & Utilities
+PyYAML==6.0.3
+
+# Testing
+pytest==9.1.1
+
+# Interactive Demonstration App
+streamlit==1.67.0

@@ -61,6 +61,15 @@ venv.bak/
 *.tgz
 *.gz
 archive.zip
+*.npy
+*.npz
+colab_phase3_package/
+colab_phase3_package.json
+
+# Coursework Reports & Submissions (Private / Turnitin protection)
+reports/
+*.docx
+*.pdf
 
 # Dataset & Artifacts (keep directory structure via .gitkeep)
 data/raw/*

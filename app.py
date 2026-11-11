@@ -16,5 +16,5 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from demo.app import main
 
-if __name__ == "__main__" or "streamlit" in sys.modules:
+if __name__ == "__main__":
     main()

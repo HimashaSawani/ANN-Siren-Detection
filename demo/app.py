@@ -305,7 +305,21 @@ def main() -> None:
             )
         st.caption("Protocol: UrbanSound8K Folds 1–8 train, Fold 9 validation, Fold 10 test.")
 
-    engine = get_inference_engine()
+    try:
+        engine = get_inference_engine()
+    except FileNotFoundError as exc:
+        st.error(
+            f"⚠️ **Model Checkpoint Not Found**\n\n"
+            f"{exc}\n\n"
+            f"Trained model checkpoints are gitignored to maintain a clean repository size.\n\n"
+            f"**To acquire the model checkpoints:**\n"
+            f"1. Run: `python scripts/download_checkpoints.py`\n"
+            f"2. Or download the checkpoints release bundle from GitHub Releases and extract into `checkpoints/`.\n"
+            f"3. Or retrain locally: `python scripts/run_competing_models_t3.py`."
+        )
+        st.stop()
+        return
+
     sample_dir = PROJECT_ROOT / "demo" / "sample_audio"
     siren_path = sample_dir / "siren_sample_165166-8-0-0.wav"
     non_siren_path = sample_dir / "non_siren_sample_100795-3-0-0.wav"

@@ -84,9 +84,11 @@ def test_demo_preset_and_uploaded_bytes_inference() -> None:
     assert res_upload["predicted_class"] == "Non-Siren"
     assert res_upload["probability"] <= 0.20
 
-    # 3. Multi-model comparative inference on bytes
+    # 3. Multi-model comparative inference on bytes (including Phase 2 noise-augmented model)
     comp = engine.compare_all_models(siren_bytes, threshold=0.50)
-    assert len(comp["models"]) == 4
+    assert len(comp["models"]) >= 4
+    assert "deep_mlp" in comp["models"]
+    assert "deep_mlp_augmented" in comp["models"]
     for key, model_info in comp["models"].items():
         assert "model_name" in model_info
         assert "probability" in model_info
@@ -137,6 +139,21 @@ def test_demo_state_management_workflow() -> None:
     audio_id_1 = "preset_siren_165166"
     audio_id_2 = "preset_non_siren_100795"
     assert audio_id_1 != audio_id_2
+
+
+def test_root_app_entrypoint_and_explainability_integration() -> None:
+    """Verify root app.py delegates to demo.app.main and demo exposes explainability."""
+    import app
+    import demo.app as demo_app
+
+    assert hasattr(app, "main")
+    assert callable(app.main)
+    assert app.main is demo_app.main
+
+    # Verify explainability functions exist in demo.app
+    assert hasattr(demo_app, "get_shap_explainer")
+    assert callable(demo_app.get_shap_explainer)
+    assert hasattr(demo_app, "create_shap_attribution_plotly")
 
 
 

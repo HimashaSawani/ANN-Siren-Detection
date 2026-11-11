@@ -173,7 +173,9 @@ def test_compare_all_models_with_raw_bytes() -> None:
     siren_bytes = siren_path.read_bytes()
 
     comp = engine.compare_all_models(siren_bytes, threshold=0.50)
-    assert len(comp["models"]) == 4
+    assert len(comp["models"]) >= 4
+    assert "deep_mlp" in comp["models"]
+    assert "deep_mlp_augmented" in comp["models"]
     for _, m_info in comp["models"].items():
         assert 0.0 <= m_info["probability"] <= 1.0
 

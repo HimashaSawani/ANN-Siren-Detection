@@ -15,9 +15,15 @@ import os
 import platform
 import random
 import sys
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+# Ensure persistent, writable Matplotlib cache directory in sandbox environments
+_mpl_cache_dir = os.path.join(tempfile.gettempdir(), "matplotlib_cache")
+os.makedirs(_mpl_cache_dir, exist_ok=True)
+os.environ.setdefault("MPLCONFIGDIR", _mpl_cache_dir)
 
 import numpy as np
 import torch

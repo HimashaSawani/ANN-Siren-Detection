@@ -2,22 +2,27 @@
 
 Module: NB6057CEM — Artificial Neural Networks
 Coursework Stage: CW1 T5 (Model Recommendation and Inference) & T6 (Demonstration)
+Portfolio Upgrade: Phase 1 — Evidence-Based Explainable AI (SHAP Attributions)
 
 Simple, cohesive, functional audio detection application.
 Features user-controlled "Analyze Audio" execution, dynamic Plotly charts,
-pure light theme, and real multi-model inference.
+pure light theme, real multi-model inference, and local SHAP feature attributions.
 """
 
 from __future__ import annotations
 
 import html
+import os
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
+# Ensure persistent, writable Matplotlib cache directory in sandbox
+mpl_cache = Path(tempfile.gettempdir()) / "mpl_cache"
+mpl_cache.mkdir(parents=True, exist_ok=True)
+os.environ.setdefault("MPLCONFIGDIR", str(mpl_cache))
+
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -29,6 +34,11 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.audio_features import CorruptAudioError
+from src.explainability import (
+    SirenSHAPExplainer,
+    create_shap_attribution_plotly,
+    is_shap_available,
+)
 from src.inference import SirenInferenceEngine
 
 
@@ -37,6 +47,17 @@ def get_inference_engine(_version: str = "2026.11.10.v6_light_analyze_workflow")
     """Initialize and cache the production inference engine."""
     from src.inference import SirenInferenceEngine
     return SirenInferenceEngine()
+
+
+@st.cache_resource(show_spinner=False)
+def get_shap_explainer(_version: str = "2026.11.11.v1_shap") -> SirenSHAPExplainer | None:
+    """Initialize and cache the SHAP explainer for Deep MLP (optional feature)."""
+    if not is_shap_available():
+        return None
+    try:
+        return SirenSHAPExplainer()
+    except Exception:
+        return None
 
 
 @st.cache_data
@@ -171,8 +192,12 @@ def plot_waveform_and_spectrogram(
     waveform: np.ndarray,
     log_mel: np.ndarray,
     sample_rate: int = 22050,
-) -> matplotlib.figure.Figure:
+) -> Any:
     """Render dual-panel waveform and Log-Mel spectrogram figure (Matplotlib export / fallback)."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8.6, 4.4), dpi=120)
     time_axis = np.linspace(0.0, len(waveform) / sample_rate, len(waveform))
     ax1.plot(time_axis, waveform, color="#2563EB", linewidth=0.75, alpha=0.9)
@@ -324,12 +349,19 @@ def main() -> None:
             provenance = "Custom WAV upload"
             active_audio_id = f"upload:{uploaded_file.name}:{uploaded_file.size}"
 
-    for key, default in (("current_audio_id", None), ("cached_prediction", None), ("cached_comparison", None)):
+    for key, default in (
+        ("current_audio_id", None),
+        ("cached_prediction", None),
+        ("cached_comparison", None),
+        ("cached_explanation", None),
+    ):
         st.session_state.setdefault(key, default)
+
     if active_audio_id != st.session_state["current_audio_id"]:
         st.session_state["current_audio_id"] = active_audio_id
         st.session_state["cached_prediction"] = None
         st.session_state["cached_comparison"] = None
+        st.session_state["cached_explanation"] = None
 
     with preview_col:
         st.markdown('<div class="card"><p class="eyebrow">02 · Preview</p><h3>Audio preview</h3>', unsafe_allow_html=True)
@@ -347,12 +379,22 @@ def main() -> None:
             analyze_clicked = st.button("▶  Analyze Audio", type="primary", use_container_width=True)
             if analyze_clicked:
                 try:
-                    with st.spinner("Extracting features and running inference…"):
+                    with st.spinner("Extracting features, computing inference, and generating explanations…"):
                         st.session_state["cached_prediction"] = engine.predict(audio_bytes, threshold=threshold)
                         st.session_state["cached_comparison"] = engine.compare_all_models(audio_bytes, threshold=threshold)
+                        
+                        # Generate SHAP explanation if available
+                        explainer = get_shap_explainer()
+                        if explainer is not None:
+                            st.session_state["cached_explanation"] = explainer.explain_audio(
+                                audio_bytes, engine=engine, top_k=10
+                            )
+                        else:
+                            st.session_state["cached_explanation"] = None
                 except (CorruptAudioError, OSError, RuntimeError, ValueError) as err:
                     st.session_state["cached_prediction"] = None
                     st.session_state["cached_comparison"] = None
+                    st.session_state["cached_explanation"] = None
                     st.error(f"Unable to analyze this recording: {err}")
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -388,9 +430,58 @@ def main() -> None:
         with chart_cols[1]:
             st.plotly_chart(create_spectrogram_plotly(cached_pred["log_mel_spectrogram"], cached_pred["duration_sec"]), use_container_width=True, config={"displayModeBar": False})
 
-        with st.expander("Advanced details · multi-model comparison", expanded=False):
+        # 05 · Explain Prediction (SHAP Feature Attributions)
+        cached_expl = st.session_state.get("cached_explanation")
+        if cached_expl is not None:
+            st.markdown('<p class="eyebrow" style="margin-top:1.4rem;">05 · Explain prediction (Evidence-Based SHAP)</p>', unsafe_allow_html=True)
+            
+            # Grounded acoustic interpretation card
+            st.markdown(
+                f'<div class="card" style="margin-bottom:0.75rem; background:#FFFFFF; border:1px solid #DCE7F5;">'
+                f'<div style="font-size:0.75rem; font-weight:800; color:#0B73E0; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.35rem;">Model Decision Rationale</div>'
+                f'<div style="font-size:0.88rem; color:#10204F; line-height:1.55;">'
+                f'{cached_expl["interpretation"]}'
+                f'</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+            # Dual-column: SHAP horizontal attribution bar chart & Top 10 features table
+            expl_cols = st.columns([1.1, 0.9], gap="medium")
+            with expl_cols[0]:
+                st.plotly_chart(
+                    create_shap_attribution_plotly(cached_expl, top_k=10),
+                    use_container_width=True,
+                    config={"displayModeBar": False},
+                )
+            with expl_cols[1]:
+                st.markdown('<div style="font-size:0.82rem; font-weight:700; color:#10204F; margin-bottom:0.4rem;">Top 10 Contributing MFCC Coefficients</div>', unsafe_allow_html=True)
+                top_rows = [
+                    {
+                        "Rank": f["rank"],
+                        "Feature": f["feature_name"],
+                        "Attribution (Logit)": f"{f['attribution']:+.4f}",
+                        "Direction": f["direction"],
+                        "Acoustic Descriptor": f["description"],
+                    }
+                    for f in cached_expl.get("top_features", [])[:10]
+                ]
+                st.dataframe(pd.DataFrame(top_rows), use_container_width=True, hide_index=True)
+
+            # Scientific Caveat / Scope Callout
+            st.markdown(
+                """
+                <div style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:10px; padding:0.65rem 0.85rem; font-size:0.75rem; color:#92400E; margin-top:0.4rem; line-height:1.4;">
+                    <strong>Scope & Limitations:</strong> SHAP values quantify additive local feature contributions to the pre-sigmoid logit based on DeepLIFT relative to the training split background. Attributions indicate internal model feature weighting, not physical real-world causation. Model-estimated scores are statistical outputs with class loss weighting and are not necessarily calibrated probabilities.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        with st.expander("Advanced details · multi-model comparison & noise robustness", expanded=False):
             cached_comp = st.session_state.get("cached_comparison")
             if cached_comp is not None:
+                st.markdown("#### Live Model Comparison on Selected Audio")
                 rows = []
                 for model_info in cached_comp.get("models", {}).values():
                     model_prob = float(model_info["probability"])
@@ -402,6 +493,45 @@ def main() -> None:
                 st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
             else:
                 st.caption("Comparison is unavailable for this recording.")
+
+            # Phase 2 Empirical Robustness Benchmark Table & Figure
+            phase2_csv = PROJECT_ROOT / "results" / "metrics" / "phase2_clean_vs_augmented_comparison.csv"
+            phase2_img = PROJECT_ROOT / "results" / "figures" / "phase2_noise_robustness_comparison.png"
+            if phase2_csv.is_file():
+                st.divider()
+                st.markdown("#### Phase 2 Empirical Benchmark: Clean vs. Noise-Augmented (Fold 10)")
+                df_phase2 = pd.read_csv(phase2_csv)
+                display_cols = ["condition", "model", "macro_f1", "siren_recall", "siren_precision", "pr_auc", "inference_latency_ms"]
+                display_df = df_phase2[display_cols].copy()
+                display_df.columns = ["Condition", "Model", "Macro-F1", "Siren Recall", "Precision", "PR-AUC", "Latency (ms)"]
+                for c in ["Macro-F1", "Siren Recall", "Precision", "PR-AUC"]:
+                    display_df[c] = display_df[c].apply(lambda v: f"{v:.4f}")
+                display_df["Latency (ms)"] = display_df["Latency (ms)"].apply(lambda v: f"{v:.3f}")
+                st.dataframe(display_df, use_container_width=True, hide_index=True)
+
+                if phase2_img.is_file():
+                    st.image(str(phase2_img), caption="Noise Degradation Curves across SNR Levels (Fold 10, N=837)", use_container_width=True)
+
+            # Phase 3 Spectro-Temporal Architecture Benchmark Table & Figure
+            phase3_csv = PROJECT_ROOT / "results" / "metrics" / "phase3_model_comparison.csv"
+            phase3_img = PROJECT_ROOT / "results" / "figures" / "phase3_architecture_comparison.png"
+            if phase3_csv.is_file():
+                st.divider()
+                st.markdown("#### Phase 3 Architectural Benchmark: CNN + GRU Hybrid vs. Baselines (Fold 10)")
+                df_phase3 = pd.read_csv(phase3_csv)
+                p3_display_cols = ["model_name", "representation", "trainable_parameters", "test_macro_f1", "siren_recall", "siren_precision", "pr_auc", "inference_latency_ms"]
+                p3_df = df_phase3[p3_display_cols].copy()
+                p3_df.columns = ["Architecture", "Representation", "Parameters", "Test Macro-F1", "Siren Recall", "Precision", "PR-AUC", "Latency (ms)"]
+                for c in ["Test Macro-F1", "Siren Recall", "Precision", "PR-AUC"]:
+                    p3_df[c] = p3_df[c].apply(lambda v: f"{v:.4f}")
+                p3_df["Latency (ms)"] = p3_df["Latency (ms)"].apply(lambda v: f"{v:.3f}")
+                p3_df["Parameters"] = p3_df["Parameters"].apply(lambda v: f"{int(v):,}")
+                st.dataframe(p3_df, use_container_width=True, hide_index=True)
+
+                if phase3_img.is_file():
+                    st.image(str(phase3_img), caption="Comparative Performance: Macro-F1 and Siren Class Recall (Fold 10, N=837)", use_container_width=True)
+
+
 
     st.markdown(
         '<div class="footer">Academic prototype for NB6057CEM · Fixed 4-second preprocessing window · '

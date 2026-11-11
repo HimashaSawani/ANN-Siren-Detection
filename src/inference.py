@@ -283,6 +283,36 @@ class SirenInferenceEngine:
                     "predicted_class": "Siren" if p_cnn >= threshold else "Non-Siren",
                 }
 
+        # 5. Noise-Augmented Deep MLP (Phase 2, Seed 42)
+        aug_mlp_path = self.checkpoints_dir / "deep_mlp_augmented_seed42.pt"
+        if aug_mlp_path.is_file():
+            aug_model, _ = load_pytorch_checkpoint(aug_mlp_path, device=self.device)
+            aug_model.eval()
+            with torch.no_grad():
+                t_x = torch.from_numpy(norm_mfcc).to(self.device)
+                p_aug = float(torch.sigmoid(aug_model(t_x)).item())
+                results["deep_mlp_augmented"] = {
+                    "model_name": "Deep MLP (Noise-Augmented, Phase 2)",
+                    "probability": round(p_aug, 4),
+                    "is_siren": p_aug >= threshold,
+                    "predicted_class": "Siren" if p_aug >= threshold else "Non-Siren",
+                }
+
+        # 6. CNN + GRU Hybrid (Phase 3, Seed 42)
+        cnn_gru_path = self.checkpoints_dir / "cnn_gru_seed42.pt"
+        if cnn_gru_path.is_file() and self.mel_normalizer is not None:
+            crnn_model, _ = load_pytorch_checkpoint(cnn_gru_path, device=self.device)
+            crnn_model.eval()
+            norm_mel = self.mel_normalizer.transform(log_mel.reshape(1, 1, 128, 173)).astype(np.float32)
+            with torch.no_grad():
+                p_crnn = float(torch.sigmoid(crnn_model(torch.from_numpy(norm_mel))).item())
+                results["cnn_gru"] = {
+                    "model_name": "CNN + GRU Hybrid (Spectro-Temporal)",
+                    "probability": round(p_crnn, 4),
+                    "is_siren": p_crnn >= threshold,
+                    "predicted_class": "Siren" if p_crnn >= threshold else "Non-Siren",
+                }
+
         return {
             "models": results,
             "waveform": waveform,

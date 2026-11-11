@@ -672,8 +672,11 @@ def create_model(
         return DeepMLP(seed=seed, **kwargs)
     if norm_id == "cnn_2d":
         return Conv2DCNN(seed=seed, **kwargs)
+    if norm_id in ("cnn_gru", "crnn"):
+        from src.hybrid_model import CNNGRUHybrid
+        return CNNGRUHybrid(seed=seed, **kwargs)
     raise ConfigurationError(
-        f"Unsupported competing model_id '{model_id}'. Expected 'random_forest', 'deep_mlp', or 'cnn_2d'."
+        f"Unsupported competing model_id '{model_id}'. Expected 'random_forest', 'deep_mlp', 'cnn_2d', or 'cnn_gru'."
     )
 
 

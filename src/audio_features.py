@@ -522,7 +522,8 @@ def _decode_raw_wav(
         if data.dtype == np.uint8:
             samples = ((data.astype(np.float32) - 128.0) / 128.0).astype(np.float32)
         else:
-            samples = (data.astype(np.float32) / max_abs).astype(np.float32)
+            samples = data.astype(np.float32)
+            samples /= np.float32(max_abs)
     elif np.issubdtype(data.dtype, np.floating):
         samples = data.astype(np.float32)
     else:

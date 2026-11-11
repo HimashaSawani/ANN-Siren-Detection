@@ -10,7 +10,7 @@ Strict Constraints:
   * Input matrix X has shape (N, D) = (N, 80), where rows N index audio observations
     and columns D = 80 index standardized MFCC summary features.
   * Target vector Y has shape (N, 1) (or 1D (N,) reshaped to (N, 1)), with binary
-    values in {0, 1} (1 = siren, 0 = non-siren).
+    values in {0, 1} (1 = siren, 0 = non-siren)
 - Trainable Parameters (Total = 2,625 parameters):
   * W1: (80, 32)  — Input-to-hidden weight matrix (2,560 parameters)
   * b1: (32,)     — Hidden layer bias vector (32 parameters)

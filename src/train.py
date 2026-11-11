@@ -262,6 +262,20 @@ def load_pytorch_checkpoint(
             output_dim=int(arch["output_dim"]),
             seed=arch.get("seed", 42),
         )
+    elif model_id in ("cnn_gru", "crnn"):
+        from src.hybrid_model import CNNGRUHybrid
+        model = CNNGRUHybrid(
+            in_channels=int(arch.get("in_channels", 1)),
+            conv_channels=tuple(arch.get("conv_channels", (16, 32, 64))),
+            gru_hidden_size=int(arch.get("gru_hidden_size", 64)),
+            gru_num_layers=int(arch.get("gru_num_layers", 1)),
+            bidirectional=bool(arch.get("bidirectional", True)),
+            n_mels=int(arch.get("n_mels", 128)),
+            time_frames=int(arch.get("time_frames", 173)),
+            dropout=float(arch.get("dropout", 0.3)),
+            output_dim=int(arch.get("output_dim", 1)),
+            seed=arch.get("seed", 42),
+        )
     else:
         raise ValueError(f"Unknown model_id '{model_id}' inside checkpoint '{target}'.")
 

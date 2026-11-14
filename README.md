@@ -1,24 +1,36 @@
-# Robust Emergency Siren Classification Under Urban Noise: A Comparative Study of MLP and CNN Architectures
+# Robust Emergency Siren Classification Under Urban Noise
+### A Comparative Study of First-Principles MLP, Deep CNN, and CRNN Architectures
 
-**Module:** NB6057CEM — Artificial Neural Networks  
-**Coursework:** Complete CW1 Tasks (T1–T6) Technical Implementation & Evaluation Record  
-**Project Status:** Completed prototype; Phase 1 (SHAP XAI), Phase 2 (Noise Augmentation), and Phase 3 (CNN+GRU Hybrid) Verified  
-**Verification:** 116 passing regression, integration, explainability, robustness & hybrid tests (`pytest tests/ -v`)  
-**Interactive Interface:** `streamlit run app.py` &bull; **Terminal Demo:** `python scripts/coursework_demo.py`
+[![Test Suite](https://img.shields.io/badge/Tests-116%20Passing-brightgreen?style=flat-square&logo=pytest)](file:///d:/ANN-Siren-Detection/tests)
+[![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12%20%7C%203.13-blue?style=flat-square&logo=python)](file:///d:/ANN-Siren-Detection/requirements.txt)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.8%2B-ee4c2c?style=flat-square&logo=pytorch)](file:///d:/ANN-Siren-Detection/src/models_torch.py)
+[![Streamlit](https://img.shields.io/badge/Streamlit-Interactive%20Demo-FF4B4B?style=flat-square&logo=streamlit)](file:///d:/ANN-Siren-Detection/app.py)
+[![Dataset](https://img.shields.io/badge/Dataset-UrbanSound8K%20(CC%20BY--NC%204.0)-lightgrey?style=flat-square)](https://urbansounddataset.acm.org)
+
+**Author:** Himasha Sawani  
+**Repository:** [github.com/HimashaSawani/ANN-Siren-Detection](https://github.com/HimashaSawani/ANN-Siren-Detection)  
+**Academic Origin:** Coventry University — Module NB6057CEM (Artificial Neural Networks)  
+**Verification:** 116 automated unit, regression, explainability, robustness, and hybrid tests (`pytest tests/ -q`)  
+**Interfaces:** Interactive Streamlit App (`streamlit run app.py`) &bull; Code-First CLI Demo (`python scripts/coursework_demo.py`)
 
 ---
 
 ## 1. Executive Summary
 
-This repository delivers an end-to-end, empirically evaluated machine learning pipeline for emergency siren classification research (`siren` vs. `non_siren`) under challenging urban acoustic clutter using the official **UrbanSound8K** dataset (8,732 recordings, 10 folds, 8.4:1 non-siren to siren class imbalance).
+This repository delivers an end-to-end, reproducible machine learning system for emergency vehicle siren detection (`siren` vs. `non_siren`) under realistic urban acoustic clutter. Using the official **UrbanSound8K** dataset (8,732 audio clips across 10 pre-arranged folds with an 8.4:1 class imbalance), this project evaluates the trade-offs between computational efficiency, feature representations, noise robustness, and temporal sequential modeling.
 
-The project rigorously compares six distinct model architectures across standardized 22,050 Hz, 4.0-second mono audio windows:
-1. **First-Principles NumPy MLP (CW1 T2):** 2,625 parameters (80 -> 32 -> 1). Built from raw mathematical equations with analytical backpropagation and verified numerical gradient checks ($\text{rel\_diff} = 2.13 \times 10^{-10}$).
-2. **Random Forest Baseline (CW1 T3):** 100-tree scikit-learn ensemble with balanced class weights on 80-D MFCC summary statistics.
-3. **Deep PyTorch MLP (CW1 T3):** 18,689 parameters (80 -> 128 -> 64 -> 1). Multi-layer neural network with dropout regularization ($p=0.3$) and positive loss weighting ($\text{pos\_weight} = 8.29$).
-4. **2D Convolutional Neural Network (CW1 T3):** 23,585 parameters. Deep spatial feature extractor operating on $(1, 128, 173)$ Log-Mel spectrograms with batch normalization and global average pooling.
-5. **Noise-Augmented Deep MLP (Phase 2 Portfolio Upgrade):** 18,689 parameters. Same architecture as Deep MLP, trained with controlled multi-condition audio waveform perturbations across 4 SNR levels (clean, 20 dB, 10 dB, 5 dB), achieving **+15.67 percentage points siren recall gain** under severe acoustic masking.
-6. **CNN + GRU Hybrid / CRNN (Phase 3 Portfolio Upgrade):** 77,601 parameters. Spectro-temporal deep model combining a 3-block 2D CNN frontend, adaptive frequency collapse, and a 1-layer bidirectional GRU ($2 \times 64 = 128$) to capture sequential acoustic cadence.
+### System Highlights:
+- **Full Spectrum of Architectures:** Compares 6 model paradigms from first-principles analytical mathematics to modern hybrid deep learning:
+  1. **NumPy MLP from Scratch:** 2,625 parameters ($80 \to 32 \to 1$). Built from raw equations with analytical backpropagation and verified numerical gradient checks ($\text{rel\_diff} = 2.13 \times 10^{-10}$).
+  2. **Random Forest Baseline:** 100-tree scikit-learn ensemble with balanced class weights on 80-D MFCC summary statistics.
+  3. **Deep PyTorch MLP:** 18,689 parameters ($80 \to 128 \to 64 \to 1$) with dropout ($p=0.3$) and positive loss weighting ($\text{pos\_weight} = 8.29$).
+  4. **2D Convolutional Neural Network:** 23,585 parameters operating on $(1, 128, 173)$ Log-Mel spectrograms with batch normalization and global pooling.
+  5. **Noise-Augmented Deep MLP (Phase 2):** 18,689 parameters trained with controlled multi-condition audio waveform perturbations across 4 SNR levels (clean, 20 dB, 10 dB, 5 dB), delivering a **+15.67 percentage point siren recall gain** under severe noise masking.
+  6. **CNN + GRU Hybrid / CRNN (Phase 3):** 77,601 parameters. Spectro-temporal deep model combining a 3-block 2D CNN frontend and a 1-layer bidirectional GRU ($2 \times 64 = 128$) to capture sequential acoustic cadence.
+- **Strict Leakage Prevention:** Follows the official UrbanSound8K 10-fold partition (Folds 1–8 train, Fold 9 validation, Fold 10 held-out test). Recording session source IDs (`fsID`) never cross partition boundaries. Scalers are fitted exclusively on training folds.
+- **Explainable AI (XAI):** Integrated PyTorch `DeepExplainer` computes local SHAP feature attributions on pre-sigmoid logits, with domain-grounded DCT-II quefrency semantic mappings.
+- **Multi-Hardware Profiling:** Explicitly separates CPU inference latency (host x86) from GPU inference latency (NVIDIA T4 on Google Colab Pro) to prevent misleading cross-platform claims.
+- **Production-Ready Web Application:** Modern Streamlit interface with interactive Plotly waveform, Log-Mel spectrogram, multi-model probability cross-checking, and dynamic threshold tuning.
 
 ---
 
@@ -84,24 +96,34 @@ print(f"Interpretation: {result['interpretation']}")
 
 ## 4. Quick Start
 
-### Installation & Setup (Windows PowerShell)
+### Installation & Environment Setup
 
 ```powershell
 # 1. Clone the repository
 git clone https://github.com/HimashaSawani/ANN-Siren-Detection.git
 cd ANN-Siren-Detection
 
-# 2. Create and activate a Python virtual environment
+# 2. Create and activate a Python virtual environment (Python 3.11 - 3.13)
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1    # On Linux/macOS: source .venv/bin/activate
 
 # 3. Install dependencies
 pip install -r requirements.txt
+
+# 4. Verify model checkpoints
+# To maintain a lightweight repository size, model weights (.pt, .joblib, .npz) are gitignored.
+# - If you are in the local development repository with pre-existing checkpoints, verify their SHA256 integrity:
+python scripts/download_checkpoints.py --verify-only
+
+# - If you are on a fresh clone without checkpoints, download the pre-packaged release bundle from GitHub Releases:
+#   https://github.com/HimashaSawani/ANN-Siren-Detection/releases/latest
+#   and extract into the repository root, or retrain deterministically via:
+#   python scripts/run_competing_models_t3.py
 ```
 
 ---
 
-### Option 1 — Run the Streamlit Interface
+### Option 1 — Run the Interactive Streamlit Interface
 
 Launch the interactive web application:
 
@@ -111,7 +133,7 @@ streamlit run app.py
 
 * Open the local URL displayed in the terminal (typically `http://localhost:8501` or `http://localhost:8503`).
 * Select a benchmark sample from the collapsed *"Try sample audio"* expander or upload a custom WAV file.
-* Click **Analyze Audio** to display the model prediction, estimated probability, and interactive Plotly signal charts.
+* Click **Analyze Audio** to display the model prediction, estimated probability, interactive Plotly waveform, Log-Mel spectrogram, and SHAP attributions.
 
 ---
 
@@ -398,13 +420,6 @@ ANN-Siren-Detection/
 ├── notebooks/
 │   ├── colab_t3_training.ipynb      # Google Colab Pro GPU continuation workflow (CW1 T1-T3)
 │   └── colab_phase3_cnn_gru.ipynb   # Phase 3 CNN+GRU Hybrid GPU training on Colab Pro
-├── reports/
-│   ├── cw1_t1_evidence.md           # Dataset acquisition & leakage audit evidence
-│   ├── cw1_t4_evidence.md           # Multi-seed evaluation & ablation findings
-│   ├── cw1_t5_recommendation.md     # Model selection trade-off analysis
-│   ├── cw1_t6_reproducibility.md    # Environment & reproducibility specification
-│   ├── cw1_t6_demo_script.md        # Technical presentation script
-│   └── CW1_Final_Technical_Record.docx # Formal coursework submission report
 ├── results/
 │   ├── figures/                     # Verified confusion matrices, PR curves & Phase 2 comparison curves
 │   └── metrics/                     # Genuine CSV evaluation outputs & Phase 2 JSON summaries
@@ -440,4 +455,4 @@ ANN-Siren-Detection/
 - **Dataset Citation:** J. Salamon, C. Jacoby and J. P. Bello, *"A Dataset and Taxonomy for Urban Sound Research"*, ACM Multimedia 2014.
 - **Dataset License:** The UrbanSound8K dataset is provided under the Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0) license.
 - **Evaluation Benchmark:** 10-fold cross-validation strictly preserving the official UrbanSound8K partition design.
-- **Academic Integrity & Turnitin Notice:** Coursework documentation, technical records, and theory reports under `reports/` represent authentic academic submissions for Coventry University module NB6057CEM. All models, code, and experimental outputs originate from genuine verified executions.
+- **Academic Integrity Notice:** This repository originated as an academic research prototype for Coventry University module NB6057CEM. To maintain institutional academic compliance and prevent Turnitin / search engine conflicts for current and future cohorts, formal student coursework submissions and theory reports are omitted from this public repository. All models, code, and experimental results are genuine verified artifacts.

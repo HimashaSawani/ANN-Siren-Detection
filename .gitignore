@@ -95,3 +95,7 @@ Thumbs.db
 *.swp
 *.swo
 
+# Local backups & vaults
+.backups/
+.staging/
+

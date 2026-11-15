@@ -1,10 +1,10 @@
 # Robust Emergency Siren Classification Under Urban Noise
 ### A Comparative Study of First-Principles MLP, Deep CNN, and CRNN Architectures
 
-[![Test Suite](https://img.shields.io/badge/Tests-116%20Passing-brightgreen?style=flat-square&logo=pytest)](file:///d:/ANN-Siren-Detection/tests)
-[![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12%20%7C%203.13-blue?style=flat-square&logo=python)](file:///d:/ANN-Siren-Detection/requirements.txt)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.8%2B-ee4c2c?style=flat-square&logo=pytorch)](file:///d:/ANN-Siren-Detection/src/models_torch.py)
-[![Streamlit](https://img.shields.io/badge/Streamlit-Interactive%20Demo-FF4B4B?style=flat-square&logo=streamlit)](file:///d:/ANN-Siren-Detection/app.py)
+[![Test Suite](https://img.shields.io/badge/Tests-116%20Passing-brightgreen?style=flat-square&logo=pytest)](tests/)
+[![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12%20%7C%203.13-blue?style=flat-square&logo=python)](requirements.txt)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.8%2B-ee4c2c?style=flat-square&logo=pytorch)](src/models_torch.py)
+[![Streamlit](https://img.shields.io/badge/Streamlit-Interactive%20Demo-FF4B4B?style=flat-square&logo=streamlit)](app.py)
 [![Dataset](https://img.shields.io/badge/Dataset-UrbanSound8K%20(CC%20BY--NC%204.0)-lightgrey?style=flat-square)](https://urbansounddataset.acm.org)
 
 **Author:** Himasha Sawani  
@@ -120,6 +120,9 @@ python scripts/download_checkpoints.py --verify-only
 #   and extract into the repository root, or retrain deterministically via:
 #   python scripts/run_competing_models_t3.py
 ```
+
+> [!NOTE]
+> **Model Artifact Security Advisory:** The Random Forest baseline (`random_forest_t3_seed42.joblib`) is serialized using Joblib/Pickle. To maintain security, only load checkpoints acquired from the official GitHub Release and verify its SHA256 checksum (`e7eb080f8a2dc4873930e8c4c6dca71f89d1e8ad14a41af905721c4db12bce3d`). Alternatively, train the model locally via `python scripts/run_competing_models_t3.py`.
 
 ---
 
@@ -261,8 +264,8 @@ To exploit the sequential acoustic dynamics of emergency siren sweeps (cyclical 
 ### 9.2 Migration to Google Colab Pro GPU
 To eliminate local host memory/pagefile pressure on Windows and enable rapid multi-seed training, Phase 3 training is migrated to **Google Colab Pro with CUDA GPU acceleration** (NVIDIA T4 / V100 / A100):
 
-- **Self-Contained Notebook:** [`notebooks/colab_phase3_cnn_gru.ipynb`](file:///d:/ANN-Siren-Detection/notebooks/colab_phase3_cnn_gru.ipynb)
-- **Drive Transfer Package Script:** [`scripts/package_colab_phase3.py`](file:///d:/ANN-Siren-Detection/scripts/package_colab_phase3.py)
+- **Self-Contained Notebook:** [`notebooks/colab_phase3_cnn_gru.ipynb`](notebooks/colab_phase3_cnn_gru.ipynb)
+- **Drive Transfer Package Script:** [`scripts/package_colab_phase3.py`](scripts/package_colab_phase3.py)
 - **Zero Raw 6GB Audio Re-Download:** Training uses pre-extracted, normalized Log-Mel spectrogram arrays (`train_val_mel_cache.npz` and `test_mel_cache.npz`), avoiding raw 6 GB audio unpacking.
 
 ### 9.3 Google Drive Directory Structure

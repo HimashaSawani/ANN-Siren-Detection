@@ -75,15 +75,15 @@ CHECKPOINT_MANIFEST: dict[str, dict[str, Any]] = {
 SUPPORTING_DATA_FILES: dict[str, dict[str, Any]] = {
     "mfcc_scaler.json": {
         "rel_path": "data/processed/mfcc_scaler.json",
-        "sha256": "38356c9a35e4e7ee0362f7902d38515053b26c615ca1e1dbfa4bc8c919d6511b",
+        "sha256": "dd6b163ffdbb8f68a51cb1ff94a89dec4d092f5f0e9cff47cbd82fac7e1289d8",
     },
     "mel_norm_stats.json": {
         "rel_path": "data/processed/mel_norm_stats.json",
-        "sha256": "fa00a1c3bb54541cb83ef255c2f829ca16b71bfd7a123ccbc97c38520d65b706",
+        "sha256": "37ca452a2d3451a0db6d4fb3f46c61c54580bcfae6cb47cf86b33aac13a794f8",
     },
     "preprocessing_config.json": {
         "rel_path": "data/processed/preprocessing_config.json",
-        "sha256": "c9c2772553bb182283e155bc2319c5c7ce1a547b74488b39a3f2dbe9492193f9",
+        "sha256": "1ac2b1b7a9f3b684995b0e580527fd8963dfedf13d85954a27a3579004ab64d0",
     },
 }
 

@@ -21,9 +21,9 @@ This repository delivers an end-to-end, reproducible machine learning system for
 
 ### System Highlights:
 - **Full Spectrum of Architectures:** Compares 6 model paradigms from first-principles analytical mathematics to modern hybrid deep learning:
-  1. **NumPy MLP from Scratch:** 2,625 parameters ($80 \to 32 \to 1$). Built from raw equations with analytical backpropagation and verified numerical gradient checks ($\text{rel\_diff} = 2.13 \times 10^{-10}$).
+  1. **NumPy MLP from Scratch:** 2,625 parameters ($80 \to 32 \to 1$). Built from raw equations with analytical backpropagation and verified numerical gradient checks (`rel_diff` = $2.13 \times 10^{-10}$, with relative difference $\text{rel}_{\text{diff}} = 2.13 \times 10^{-10}$).
   2. **Random Forest Baseline:** 100-tree scikit-learn ensemble with balanced class weights on 80-D MFCC summary statistics.
-  3. **Deep PyTorch MLP:** 18,689 parameters ($80 \to 128 \to 64 \to 1$) with dropout ($p=0.3$) and positive loss weighting ($\text{pos\_weight} = 8.29$).
+  3. **Deep PyTorch MLP:** 18,689 parameters ($80 \to 128 \to 64 \to 1$) with dropout ($p=0.3$) and positive loss weighting (`pos_weight` = 8.29, with loss weight $\text{pos}_{\text{weight}} = 8.29$).
   4. **2D Convolutional Neural Network:** 23,585 parameters operating on $(1, 128, 173)$ Log-Mel spectrograms with batch normalization and global pooling.
   5. **Noise-Augmented Deep MLP (Phase 2):** 18,689 parameters trained with controlled multi-condition audio waveform perturbations across 4 SNR levels (clean, 20 dB, 10 dB, 5 dB), delivering a **+15.67 percentage point siren recall gain** under severe noise masking.
   6. **CNN + GRU Hybrid / CRNN (Phase 3):** 77,601 parameters. Spectro-temporal deep model combining a 3-block 2D CNN frontend and a 1-layer bidirectional GRU ($2 \times 64 = 128$) to capture sequential acoustic cadence.
@@ -59,7 +59,7 @@ To provide transparent, auditable decision boundaries for safety-critical audio 
 - **Target Model:** Saved Deep MLP checkpoint (`deep_mlp_t3_seed42.pt`), operating on 80 standardized MFCC summary features (40 temporal means, 40 temporal standard deviations).
 - **Representative Background Dataset:** Formed strictly from the training split (Folds 1–8), stratified with 15% siren and 85% non-siren samples ($N=100$) to reflect real-world training class distributions without test set contamination.
 - **Logit-Space Explanations:** Attributions $\phi_i$ are computed in pre-sigmoid logit space ($\mathbb{R}$), strictly satisfying the DeepLIFT additivity property:
-  $$\sum_{i=1}^{80} \phi_i = \text{logit}(x) - \mathbb{E}[\text{logit}(x_{\text{background}})]$$
+  $$\sum_{i=1}^{80} \phi_i = \operatorname{logit}(x) - \mathbb{E}[\operatorname{logit}(x_{\mathrm{background}})]$$
   Operating in logit space avoids sigmoid saturation distortions ($P \to 1.0$ or $P \to 0.0$) and accurately reflects raw layer activations.
 - **Acoustic Grounding:** Each MFCC summary statistic is mapped to domain-specific acoustic semantics:
   - Coefficient 0 (`mfcc_mean_0`): Overall log-energy and broadband signal power.
@@ -213,7 +213,7 @@ In the original baseline noise robustness evaluation (Section 7), the clean-trai
 ### Solution Architecture: Controlled Waveform Augmentation
 Phase 2 implements controlled audio-level noise augmentation within the training pipeline while strictly preserving all coursework artifacts, benchmarks, and validation splits:
 1. **Audio-Level Injection:** Perturbations are applied directly to raw 22,050 Hz 4.0-second waveforms prior to feature extraction, rather than adding synthetic post-hoc noise to standardized feature vectors.
-2. **Documented Noise Types & SNR Bounds:** Realistic Gaussian white noise and ambient urban environmental non-siren recordings mixed at signal-to-noise ratios between $10.0\text{ dB}$ and $25.0\text{ dB}$ with probability $p = 0.5$.
+2. **Documented Noise Types & SNR Bounds:** Realistic Gaussian white noise and ambient urban environmental non-siren recordings mixed at signal-to-noise ratios between 10.0 dB and 25.0 dB with probability $p = 0.5$.
 3. **Strict Leakage Prevention:** Augmentation is restricted strictly to training folds 1–8 ($N = 7,095$). Validation (Fold 9, $N = 800$) and test (Fold 10, $N = 837$) splits remain strictly unaugmented and clean during training and early stopping.
 4. **Independent Checkpoint:** The resulting model is saved as an isolated checkpoint (`checkpoints/deep_mlp_augmented_seed42.pt`), ensuring the baseline coursework checkpoint (`checkpoints/deep_mlp_t3_seed42.pt`) remains completely untouched.
 
@@ -233,13 +233,13 @@ Both models were evaluated on the identical held-out test split (Fold 10, $N = 8
 
 #### Key Empirical Findings & Confusion Matrices
 1. **Critical Noise Resilience at 5 dB SNR:**
-   - Under heavy noise masking (5 dB SNR), the clean model detects only 30 of 83 sirens ($\text{TP}=30, \text{FN}=53, \text{TN}=754, \text{FP}=0, \text{Recall}=36.14\%$).
-   - The noise-augmented model detects 43 of 83 sirens ($\text{TP}=43, \text{FN}=40, \text{TN}=743, \text{FP}=11, \text{Recall}=51.81\%$), achieving a **+15.67 percentage point absolute recall gain** while retaining strong precision ($79.63\%$).
+   - Under heavy noise masking (5 dB SNR), the clean model detects only 30 of 83 sirens (TP = 30, FN = 53, TN = 754, FP = 0, Recall = 36.14%).
+   - The noise-augmented model detects 43 of 83 sirens (TP = 43, FN = 40, TN = 743, FP = 11, Recall = 51.81%), achieving a **+15.67 percentage point absolute recall gain** while retaining strong precision (79.63%).
    - Macro-F1 improves from **0.7485** to **0.7973** ($+0.0488$ gain), demonstrating substantial resilience under severe acoustic masking.
 2. **Generalized Representation Quality:**
-   - On clean test audio, the noise-augmented model does not degrade; in fact, its Macro-F1 rises from **0.7848** to **0.8103** ($\text{PR-AUC}=0.7095$ vs $0.6500$), indicating that controlled acoustic perturbations regularize the network against over-reliance on fragile spectral nuances.
+   - On clean test audio, the noise-augmented model does not degrade; in fact, its Macro-F1 rises from **0.7848** to **0.8103** (PR-AUC = 0.7095 vs. 0.6500), indicating that controlled acoustic perturbations regularize the network against over-reliance on fragile spectral nuances.
 3. **Computational Budget Disclosure:**
-   - Primary evaluation was deterministically executed on Seed 42 across all 4 noise conditions ($N=837 \times 4 = 3,348$ audio extractions and evaluations). Scripts provide `--seeds 42 123 2026` parameterization for multi-seed extension when external GPU resources are allocated.
+   - Primary evaluation was deterministically executed on Seed 42 across all 4 noise conditions ($N = 837 \times 4 = 3{,}348$ audio extractions and evaluations). Scripts provide `--seeds 42 123 2026` parameterization for multi-seed extension when external GPU resources are allocated.
 
 ---
 
@@ -327,7 +327,7 @@ The CNN + GRU model was trained on Google Colab Pro using CUDA GPU acceleration.
 - **Compute Accelerator:** Google Colab Pro (CUDA GPU).
 - **Execution Time:** **97.28 seconds** for 24 epochs (~4.0s / epoch vs ~60s on CPU).
 - **Early Stopping:** Triggered at Epoch 24 (patience=6); optimal validation checkpoint was selected at **Epoch 18** with **Fold 9 Validation Macro-F1 of 0.9579** (Train Loss: 0.2872, Val Loss: 0.2571).
-- **Positive Class Weighting:** $\text{pos\_weight} = 8.2866$ derived strictly from Folds 1–8 training split.
+- **Positive Class Weighting:** `pos_weight` = 8.2866 (loss weight $\text{pos}_{\text{weight}} = 8.2866$) derived strictly from Folds 1–8 training split.
 
 #### Held-Out Test Fold 10 Performance Comparison ($N=837$)
 
@@ -343,8 +343,8 @@ The CNN + GRU model was trained on Google Colab Pro using CUDA GPU acceleration.
 
 *Note: CPU Latency was benchmarked on host x86 CPU (100 forward-pass iterations per 4.0-second clip). GPU Latency was benchmarked on an NVIDIA T4 GPU in Google Colab Pro. These metrics reflect distinct hardware regimes and must not be compared directly.*
 
-#### Detailed Confusion Matrix for CNN + GRU (Fold 10, Operating Threshold $\theta=0.50$):
-$$\begin{pmatrix} \text{TN}=732 & \text{FP}=22 \\ \text{FN}=60 & \text{TP}=23 \end{pmatrix}$$
+#### Detailed Confusion Matrix for CNN + GRU (Fold 10, Operating Threshold $\theta = 0.50$):
+$$\begin{pmatrix} \mathrm{TN} = 732 & \mathrm{FP} = 22 \\ \mathrm{FN} = 60 & \mathrm{TP} = 23 \end{pmatrix}$$
 - **True Positives (TP):** 23 sirens correctly detected (out of 83 sirens in Fold 10).
 - **False Negatives (FN):** 60 sirens missed under default threshold $\theta = 0.50$.
 - **True Negatives (TN):** 732 non-siren recordings correctly rejected (out of 754 non-sirens).
